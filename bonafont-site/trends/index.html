@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BONAFONT TRENDS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Quicksand:wght@300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #000;
+    --fg: #fff;
+    --muted: #bdbdbd;
+    --line: rgba(255, 255, 255, .2);
+    --pad: clamp(1.25rem, 4vw, 4rem);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: "Oswald", "Arial Narrow", sans-serif;
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    padding: var(--pad);
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-weight: 500;
+    font-size: clamp(1.1rem, 2vw, 1.75rem);
+    letter-spacing: 0.06em;
+    animation: fade .8s ease-out both;
+  }
+
+  header a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color .25s ease;
+  }
+  header a:hover { border-bottom-color: var(--fg); }
+  header a:focus-visible { outline: 2px solid var(--fg); outline-offset: 6px; }
+
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-block: var(--pad);
+  }
+
+  .lead {
+    font-family: "Quicksand", "Nunito", sans-serif;
+    font-weight: 300;
+    font-size: clamp(1rem, 1.7vw, 1.25rem);
+    letter-spacing: 0.02em;
+    color: var(--muted);
+    margin-bottom: clamp(1rem, 3vw, 2.5rem);
+    animation: rise .9s ease-out .15s both;
+  }
+
+  .years { list-style: none; }
+
+  .years li {
+    border-top: 1px solid var(--line);
+    animation: rise .9s ease-out calc(.3s + var(--i) * .12s) both;
+  }
+  .years li:last-child { border-bottom: 1px solid var(--line); }
+
+  .years a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: clamp(.25rem, 1vw, 1rem);
+    color: var(--fg);
+    text-decoration: none;
+    transition: opacity .35s ease;
+  }
+
+  /* Al passar per sobre d'un any, els altres s'atenuen */
+  .years:hover a:not(:hover),
+  .years:focus-within a:not(:focus-visible) { opacity: .3; }
+
+  .year {
+    font-weight: 700;
+    font-size: clamp(5rem, 24vw, 22rem);
+    line-height: .95;
+    letter-spacing: -0.02em;
+    transition: transform .45s cubic-bezier(.2, .7, .2, 1);
+  }
+
+  .arrow {
+    font-weight: 500;
+    font-size: clamp(2rem, 7vw, 6rem);
+    opacity: 0;
+    transform: translateX(-1.5rem);
+    transition: opacity .35s ease, transform .45s cubic-bezier(.2, .7, .2, 1);
+  }
+
+  .years a:hover .year,
+  .years a:focus-visible .year { transform: translateX(clamp(.5rem, 1.5vw, 1.5rem)); }
+  .years a:hover .arrow,
+  .years a:focus-visible .arrow { opacity: 1; transform: translateX(0); }
+  .years a:focus-visible { outline: 2px solid var(--fg); outline-offset: -2px; }
+
+  /* En pantalles tàctils no hi ha hover: la fletxa es veu sempre */
+  @media (hover: none) {
+    .arrow { opacity: 1; transform: none; }
+  }
+
+  @keyframes fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lead, .years li { animation-name: fade; }
+    .year, .arrow { transition: none; transform: none; }
+  }
+
+  ::selection { background: var(--fg); color: var(--bg); }
+</style>
+</head>
+<body>
+  <header>
+    <a href="../">BONAFONT</a>
+    <span>Trends</span>
+  </header>
+
+  <main>
+    <p class="lead">Select a year to explore its trends.</p>
+
+    <!-- Per afegir un any nou: copia un <li>, canvia el número, el --i i la carpeta de l'enllaç -->
+    <ul class="years">
+      <li style="--i:0">
+        <a href="./2026/">
+          <span class="year">2026</span>
+          <span class="arrow" aria-hidden="true">→</span>
+        </a>
+      </li>
+    </ul>
+  </main>
+</body>
+</html>
