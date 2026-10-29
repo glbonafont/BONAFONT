@@ -405,7 +405,7 @@
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   /* Prompts: text que es posa al camp i acció en enviar.
-     action: "trends" (obre la web), "gigs", "milestones" (resposta al xat) o "whatsapp" (envia el text per WhatsApp) */
+     action: "trends" (obre Trends), "link" (obre la url del prompt), "gigs", "milestones" (resposta al xat) o "whatsapp" (envia el text per WhatsApp) */
   const PROMPTS = {
     future:     { label: "Future",          action: "trends",     text: "What's next? Show me the trends shaping the future." },
     gigs:       { label: "Gigs",            action: "gigs",       text: "Show me the projects you've worked on." },
@@ -414,7 +414,8 @@
     offer:      { label: "Offer a job",     action: "whatsapp",   text: "Hi! I have a job opportunity I'd like to offer you. Can we talk?" },
     ask:        { label: "Ask for a job",   action: "whatsapp",   text: "Hi! I'm looking for work. Is there a chance to join your team?" },
     mwc:        { label: "MWC tours",       action: "whatsapp",   text: "Tell me about the MWC tours." },
-    uxsong:     { label: "UXccenture Song", action: "whatsapp",   text: "Tell me about UXccenture Song." }
+    uxsong:     { label: "UXccenture Song", action: "link",       text: "Take me to UXccenture Song.",
+                  url: "https://dilemas.bonafont.dev", opening: "Opening UXccenture Song…" }
   };
 
   const INITIAL      = ["future", "gigs", "milestones", "personal"];
@@ -674,7 +675,7 @@
   }
 
   /* ---------- Resposta segons l'acció ---------- */
-  async function respond(action, waUrl, opened) {
+  async function respond(action, waUrl, opened, key) {
     const { el, body } = addBot();
     await wait(action === "gigs" || action === "milestones" ? 900 : 700);
 
@@ -683,6 +684,14 @@
       toBottom();
       await wait(900);
       location.href = TRENDS_URL;
+      return;
+    }
+
+    if (action === "link") {
+      body.innerHTML = "<p>" + PROMPTS[key].opening + "</p>";
+      toBottom();
+      await wait(900);
+      location.href = PROMPTS[key].url;
       return;
     }
 
@@ -738,7 +747,7 @@
     resize();
     setActive(null);
     refresh();
-    respond(action, waUrl, opened);
+    respond(action, waUrl, opened, key);
   });
 
   if (matchMedia("(hover: hover)").matches) ta.focus({ preventScroll: true });
