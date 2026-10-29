@@ -35,11 +35,23 @@
 
   /* Entrada suave de la cabecera */
   header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
     font-weight: 500;
     font-size: clamp(1.1rem, 2vw, 1.75rem);
     letter-spacing: 0.06em;
     animation: fade .8s ease-out both;
   }
+
+  header a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color .25s ease, opacity .25s ease;
+  }
+  header a:hover { border-bottom-color: var(--fg); }
+  header a:focus-visible { outline: 2px solid var(--fg); outline-offset: 6px; }
 
   @keyframes fade {
     from { opacity: 0; }
@@ -57,17 +69,72 @@
 
   .loader-inner {
     position: relative;
-    width: 0;
-    height: 0;
+    width: 120px;
+    height: 18px;
+  }
+
+  /* Ciclo de 16 s (el mismo que los mensajes):
+     0,5 s  las barras aparecen con un fundido suave
+     13 s   empiezan a desaparecer, una vez ha salido el último mensaje
+     16 s   el ciclo vuelve a empezar */
+  .spinner {
+    --sc: .92;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    animation: cycle 16s ease-in-out infinite;
+  }
+
+  @keyframes cycle {
+    0%, 3.125%     { opacity: 0; transform: scale(var(--sc)); }
+    9.375%, 81.25% { opacity: 1; transform: scale(1); }
+    87.5%, 100%    { opacity: 0; transform: scale(var(--sc)); }
+  }
+
+  /* Tres barras finas con un tramo que se desliza a distinto ritmo */
+  .bar {
+    position: relative;
+    width: 100%;
+    height: 2px;
+    background: rgba(255, 255, 255, .2);
+    overflow: hidden;
+  }
+  .bar:nth-child(2) { width: 72%; }
+  .bar:nth-child(3) { width: 48%; }
+
+  .bar::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 40%;
+    background: var(--fg);
+    animation: slide 1.6s ease-in-out infinite;
+  }
+  .bar:nth-child(2)::after { animation-duration: 1.9s; animation-delay: -.5s; }
+  .bar:nth-child(3)::after { animation-duration: 1.3s; animation-delay: -.9s; }
+
+  @keyframes slide {
+    from { transform: translateX(-100%); }
+    to   { transform: translateX(250%); }
+  }
+
+  @keyframes breathe {
+    0%, 100% { opacity: .3; }
+    50%      { opacity: 1; }
   }
 
   /* Mensajes bajo el loader */
   .msg {
     --dy: 6px;
     position: absolute;
-    top: 0;
+    top: calc(100% + 1.25rem);
     left: 50%;
-    transform: translate(-50%, calc(-50% + var(--dy)));
+    transform: translate(-50%, var(--dy));
     width: max-content;
     max-width: 90vw;
     text-align: center;
@@ -87,15 +154,15 @@
   .msg-2 { animation: msg2 16s ease-in-out infinite; }
 
   @keyframes msg1 {
-    0%, 18.75%   { opacity: 0; transform: translate(-50%, calc(-50% + var(--dy))); }
-    25%, 37.5%   { opacity: 1; transform: translate(-50%, -50%); }
-    43.75%, 100% { opacity: 0; transform: translate(-50%, calc(-50% - var(--dy))); }
+    0%, 18.75%   { opacity: 0; transform: translate(-50%, var(--dy)); }
+    25%, 37.5%   { opacity: 1; transform: translate(-50%, 0); }
+    43.75%, 100% { opacity: 0; transform: translate(-50%, calc(var(--dy) * -1)); }
   }
 
   @keyframes msg2 {
-    0%, 50%      { opacity: 0; transform: translate(-50%, calc(-50% + var(--dy))); }
-    56.25%, 75%  { opacity: 1; transform: translate(-50%, -50%); }
-    81.25%, 100% { opacity: 0; transform: translate(-50%, calc(-50% - var(--dy))); }
+    0%, 50%      { opacity: 0; transform: translate(-50%, var(--dy)); }
+    56.25%, 75%  { opacity: 1; transform: translate(-50%, 0); }
+    81.25%, 100% { opacity: 0; transform: translate(-50%, calc(var(--dy) * -1)); }
   }
 
   /* Botón fijo abajo, con entrada suave */
@@ -122,16 +189,26 @@
 
   @media (prefers-reduced-motion: reduce) {
     .msg { --dy: 0px; }
+    .spinner { --sc: 1; }
+    .bar::after { width: 100%; transform: none; animation-name: breathe; }
   }
 
   ::selection { background: var(--fg); color: var(--bg); }
 </style>
 </head>
 <body>
-  <header>BONAFONT</header>
+  <header>
+    <span>BONAFONT</span>
+    <nav><a href="trends/">Trends</a></nav>
+  </header>
 
   <div class="loader" role="status" aria-live="polite">
     <div class="loader-inner">
+      <div class="spinner" aria-hidden="true">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </div>
       <p class="msg msg-1">I hate waiting, don't you?</p>
       <p class="msg msg-2">What are you waiting for?</p>
     </div>
