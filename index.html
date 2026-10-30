@@ -305,6 +305,62 @@
   .act[aria-pressed="true"] svg { fill: currentColor; }
   .act.like[aria-pressed="true"] svg { animation: pop-small .35s var(--ease); }
 
+  /* ---------- Presentacions (MWC) ---------- */
+  .media iframe.player { pointer-events: auto; }
+  .actions .left { display: flex; gap: .15rem; }
+  .slides { cursor: default; }
+  .slides:focus-visible { outline: 2px solid var(--fg); outline-offset: -3px; }
+  .slides .slide { object-fit: contain; background: #000; }
+
+  .slide-nav, .lb-nav, .lb-close {
+    position: absolute;
+    width: 42px; height: 42px;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, .45);
+    background: rgba(0, 0, 0, .55);
+    color: var(--fg);
+    cursor: pointer;
+    transition: opacity .25s ease, background .25s ease, color .25s ease;
+  }
+  .slide-nav svg, .lb-nav svg, .lb-close svg {
+    width: 22px; height: 22px; fill: none; stroke: currentColor;
+    stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+  }
+  .slide-nav:hover:not(:disabled), .lb-nav:hover:not(:disabled), .lb-close:hover { background: var(--fg); color: var(--bg); }
+  .slide-nav:focus-visible, .lb-nav:focus-visible, .lb-close:focus-visible { outline: 2px solid var(--fg); outline-offset: 3px; }
+  .slide-nav { top: 50%; transform: translateY(-50%); opacity: 0; }
+  .slide-nav.prev { left: 10px; }
+  .slide-nav.next { right: 10px; }
+  .slides:hover .slide-nav, .slides:focus-within .slide-nav { opacity: 1; }
+  .slide-nav:disabled, .lb-nav:disabled { opacity: .2 !important; cursor: default; }
+  @media (hover: none) { .slide-nav { opacity: 1; } }
+
+  .slide-count {
+    position: absolute; right: 10px; bottom: 10px;
+    font-family: "Oswald", sans-serif; font-weight: 500; font-size: .8rem; letter-spacing: .08em;
+    background: rgba(0, 0, 0, .65); padding: .2rem .65rem; border-radius: 999px;
+  }
+
+  /* Pantalla completa de les diapositives */
+  .lb {
+    position: fixed; inset: 0; z-index: 300;
+    display: grid; place-items: center;
+    background: rgba(0, 0, 0, .97);
+    animation: fade .3s ease-out both;
+  }
+  .lb[hidden] { display: none; }
+  .lb-img { max-width: 100vw; max-height: 100vh; max-height: 100dvh; width: auto; height: auto; object-fit: contain; display: block; user-select: none; -webkit-user-select: none; touch-action: pan-y; }
+  .lb-nav { top: 50%; transform: translateY(-50%); width: 52px; height: 52px; }
+  .lb-nav.prev { left: 18px; }
+  .lb-nav.next { right: 18px; }
+  .lb-close { top: 16px; right: 16px; }
+  .lb-count {
+    position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%);
+    font-family: "Oswald", sans-serif; font-weight: 500; letter-spacing: .1em; font-size: .9rem;
+    background: rgba(0, 0, 0, .65); padding: .25rem .8rem; border-radius: 999px;
+  }
+
   .likes { padding: .55rem 1rem 0; font-weight: 500; font-size: .92rem; }
   .tags { display: block; margin-top: .65rem; color: #9a9a9a; font-size: .9rem; letter-spacing: .01em; }
   .caption { padding: .4rem 1rem 1.2rem; font-size: .95rem; line-height: 1.5; color: #e4e4e4; }
@@ -412,6 +468,14 @@
     <div class="spacer-bottom"></div>
   </main>
 
+  <div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Presentation" hidden>
+    <button class="lb-close" type="button" aria-label="Close full screen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <button class="lb-nav prev" type="button" aria-label="Previous slide"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <img class="lb-img" alt="" draggable="false">
+    <button class="lb-nav next" type="button" aria-label="Next slide"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+    <span class="lb-count" aria-live="polite"></span>
+  </div>
+
 <script>
 (() => {
   const WHATSAPP = "34626692782";
@@ -419,7 +483,7 @@
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   /* Prompts: text que es posa al camp i acció en enviar.
-     action: "trends" (obre Trends), "link" (obre la url del prompt), "gigs", "milestones" (resposta al xat) o "whatsapp" (envia el text per WhatsApp) */
+     action: "trends" (obre Trends), "link" (obre la url del prompt), "gigs", "milestones", "mwc" (resposta al xat) o "whatsapp" (envia el text per WhatsApp) */
   const PROMPTS = {
     future:     { label: "Future",          action: "trends",     text: "What's next? Show me the trends shaping the future." },
     gigs:       { label: "Gigs",            action: "gigs",       text: "Show me the projects you've worked on." },
@@ -427,7 +491,7 @@
     personal:   { label: "Personal",        action: "whatsapp",   text: "Hi! I'd love to get in touch with you personally. Can we talk?" },
     offer:      { label: "Offer a job",     action: "whatsapp",   text: "Hi! I have a job opportunity I'd like to offer you. Can we talk?" },
     ask:        { label: "Ask for a job",   action: "whatsapp",   text: "Hi! I'm looking for work. Is there a chance to join your team?" },
-    mwc:        { label: "MWC tours",       action: "whatsapp",   text: "Tell me about the MWC tours." },
+    mwc:        { label: "MWC tours",       action: "mwc",        text: "Show me your MWC tours, year by year." },
     uxsong:     { label: "UXccenture Song", action: "link",       text: "Take me to UXccenture Song.",
                   url: "https://dilemas.bonafont.dev", opening: "Opening UXccenture Song…" }
   };
@@ -504,6 +568,52 @@
       ] }
   ];
 
+/* ---- Contingut d'"MWC tours": un gig per any, el més recent primer ----
+     video:  ID d'un vídeo de YouTube (amb controls, sense autoplay)
+     slides: clau d'una presentació de SLIDES (diapositives en imatge + PDF original) */
+  const MWC = [
+    { id: "mwc2026", year: 2026, tile: "b", kicker: "Mobile World Congress", video: "Bc6RfEb42Iw", tags: ["mwc"],
+      items: [ { title: "MWC 2026", meta: "Video" } ] },
+    { id: "mwc2025", year: 2025, tile: "c", kicker: "Mobile World Congress", video: "DDcNSxlfX_8", tags: ["mwc"],
+      items: [ { title: "MWC 2025", meta: "Video" } ] },
+    { id: "mwc2024", year: 2024, tile: "d", kicker: "Mobile World Congress", slides: "mwc24", tags: ["mwc", "partnertalks"],
+      items: [ { title: "An inspiring ride", meta: "A travel through the highlights of the MWC towards the future · Presentation, 25 slides" } ] }
+  ];
+
+  /* Diapositives (media/<carpeta>/slide-01.webp ...) i PDF original; alts: text alternatiu de cada diapositiva */
+  const SLIDES = {
+    mwc24: {
+      dir: "media/mwc24/", count: 25, pdf: "media/MWC24_vged.pdf",
+      alts: [
+        "An inspiring ride: a travel through the highlights of the MWC towards the future",
+        "Barcelona skyline at sunrise",
+        "The next chapter of this great adventure: the MWC unveils the inner battle in the digital economy",
+        "History of MWC: from mobile to digital",
+        "Why now a new chapter? It all starts with the loss of competitiveness",
+        "The real battle is for the user",
+        "The 4 battle fronts to get user's first party data",
+        "The network: telcos want us to pay for the data, not only the network",
+        "Telcos are becoming supercomputers",
+        "5G is enabling already multiple use cases",
+        "The device: OEMs want users to generate data even when sleeping or driving",
+        "Anyone can produce a smartphone today",
+        "They want to access our most intimate life",
+        "The operating system: tech giants want us to use only their platforms",
+        "Android, Windows and iOS are not alone anymore",
+        "The interface and AI: AI wants to kill our user interfaces",
+        "The golden mile is for the golden corps",
+        "AI is disrupting how we interact with tech in 3 stages",
+        "Humane logo on a black slide",
+        "Where does this leave VGED?",
+        "And... what's next? Technology never stops evolving",
+        "Lenovo reinvents the hardware",
+        "Apple and Meta resurrect spatial design and metaverse",
+        "Cars are not only for the road anymore",
+        "Thanks. Do you have any questions?"
+      ]
+    }
+  };
+
   /* ---- "M'agrada" i "desats": guardats en aquest navegador (localStorage) ----
      BASE_LIKES: m'agrada d'altres visitants. Un recompte compartit entre persones necessita un
      servidor; mentre no n'hi hagi, el recompte només inclou el m'agrada d'aquest navegador. */
@@ -545,7 +655,10 @@
 
   const ICONS = {
     heart: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.2l7.8-7.7 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>',
-    bookmark: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>'
+    bookmark: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>',
+    expand: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>',
+    prev: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>',
+    next: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>'
   };
 
   const app = document.getElementById("app");
@@ -712,8 +825,158 @@
       posts + '</div>';
   }
 
+/* ---------- MWC tours (feed) ---------- */
+  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+  function slideSrc(cfg, i) { return cfg.dir + "slide-" + String(i + 1).padStart(2, "0") + ".webp"; }
+
+  function mwcHTML() {
+    const cards = MWC.map((m, i) => {
+      const tile = '<div class="tile tile-' + m.tile + '"><span class="tile-kicker">' + m.kicker + '</span><span class="tile-title">MWC ' + m.year + '</span></div>';
+      let media, go;
+      if (m.video) {
+        let inner = '<img src="https://i.ytimg.com/vi/' + m.video + '/mqdefault.jpg" alt="" referrerpolicy="no-referrer" draggable="false">';
+        if (CAN_EMBED) {
+          inner += '<iframe class="player" src="https://www.youtube-nocookie.com/embed/' + m.video + '?rel=0&modestbranding=1&playsinline=1" title="MWC ' + m.year + ' video" ' +
+            'allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" loading="lazy"></iframe>';
+        } else {
+          inner += '<a class="watch" href="https://www.youtube.com/watch?v=' + m.video + '" target="_blank" rel="noopener">▶ Watch on YouTube</a>';
+        }
+        media = '<div class="media" style="--ar:16 / 9">' + tile + inner + '</div>';
+        go = '<a class="go" href="https://www.youtube.com/watch?v=' + m.video + '" target="_blank" rel="noopener">YouTube ↗</a>';
+      } else {
+        const cfg = SLIDES[m.slides];
+        media = '<div class="media slides" data-slides="' + m.slides + '" data-i="0" tabindex="0" role="group" aria-roledescription="carousel" aria-label="MWC ' + m.year + ' slides" style="--ar:16 / 9">' + tile +
+          '<img class="slide" src="' + slideSrc(cfg, 0) + '" alt="' + esc(cfg.alts[0]) + '" draggable="false">' +
+          '<button class="slide-nav prev" type="button" aria-label="Previous slide" disabled>' + ICONS.prev + '</button>' +
+          '<button class="slide-nav next" type="button" aria-label="Next slide">' + ICONS.next + '</button>' +
+          '<span class="slide-count">1 / ' + cfg.count + '</span></div>';
+        go = '<a class="go" href="' + cfg.pdf + '" target="_blank" rel="noopener">Open PDF ↗</a>';
+      }
+      const lines = m.items.map((x) => '<span class="line"><b>' + x.title + '</b><span class="meta">' + x.meta + '</span></span>').join("");
+      const tags = '<span class="tags">' + m.tags.map((t) => '#' + t).join(" ") + '</span>';
+      const isLiked = !!liked[m.id], isSaved = !!saved[m.id];
+      return '<article class="post" data-id="' + m.id + '" style="--i:' + i + '">' +
+        '<div class="post-head"><span class="avatar" aria-hidden="true"></span><div><strong>bonafont</strong><small>MWC ' + m.year + '</small></div>' + go + '</div>' +
+        media +
+        '<div class="actions">' +
+          '<div class="left">' +
+            '<button class="act like" type="button" aria-pressed="' + isLiked + '" aria-label="Like">' + ICONS.heart + '</button>' +
+            '<button class="act fs" type="button" aria-label="Full screen">' + ICONS.expand + '</button>' +
+          '</div>' +
+          '<button class="act save" type="button" aria-pressed="' + isSaved + '" aria-label="' + (isSaved ? "Saved" : "Save") + '">' + ICONS.bookmark + '</button>' +
+        '</div>' +
+        '<p class="likes">' + likeText(likeCount(m.id)) + '</p>' +
+        '<p class="caption">' + lines + tags + '</p>' +
+      '</article>';
+    }).join("");
+
+    return '<div class="feed">' +
+      '<header class="profile"><span class="avatar big" aria-hidden="true"></span>' +
+      '<div><strong>bonafont</strong><span class="meta">MWC tours · ' + MWC.length + ' editions</span></div></header>' +
+      cards + '</div>';
+  }
+
+  /* ---------- Visor de diapositives i pantalla completa ---------- */
+  const lb = document.getElementById("lb");
+  const lbImg = lb.querySelector(".lb-img");
+  const lbCount = lb.querySelector(".lb-count");
+  let lbViewer = null;
+  let lbReturn = null;
+
+  function showSlide(viewer, i) {
+    const cfg = SLIDES[viewer.dataset.slides];
+    i = Math.max(0, Math.min(cfg.count - 1, i));
+    viewer.dataset.i = i;
+    const img = viewer.querySelector(".slide");
+    img.src = slideSrc(cfg, i);
+    img.alt = cfg.alts[i] || "Slide " + (i + 1);
+    viewer.querySelector(".slide-count").textContent = (i + 1) + " / " + cfg.count;
+    viewer.querySelector(".prev").disabled = i === 0;
+    viewer.querySelector(".next").disabled = i === cfg.count - 1;
+    [i - 1, i + 1].forEach((j) => { if (j >= 0 && j < cfg.count) new Image().src = slideSrc(cfg, j); });   /* precàrrega */
+    if (lbViewer === viewer) syncLb();
+  }
+
+  function syncLb() {
+    const cfg = SLIDES[lbViewer.dataset.slides];
+    const i = +lbViewer.dataset.i;
+    lbImg.src = slideSrc(cfg, i);
+    lbImg.alt = cfg.alts[i] || "Slide " + (i + 1);
+    lbCount.textContent = (i + 1) + " / " + cfg.count;
+    lb.querySelector(".prev").disabled = i === 0;
+    lb.querySelector(".next").disabled = i === cfg.count - 1;
+  }
+
+  function openLb(viewer) {
+    lbViewer = viewer;
+    lbReturn = document.activeElement;
+    syncLb();
+    lb.hidden = false;
+    if (lb.requestFullscreen) { const r = lb.requestFullscreen(); if (r && r.catch) r.catch(() => {}); }   /* a l'iPhone només es veu la capa */
+    lb.querySelector(".lb-close").focus({ preventScroll: true });
+  }
+
+  function closeLb() {
+    if (lb.hidden) return;
+    lb.hidden = true;
+    if (document.fullscreenElement === lb && document.exitFullscreen) { const r = document.exitFullscreen(); if (r && r.catch) r.catch(() => {}); }
+    lbViewer = null;
+    if (lbReturn && lbReturn.focus) lbReturn.focus({ preventScroll: true });
+  }
+
+  const step = (d) => { if (lbViewer) showSlide(lbViewer, +lbViewer.dataset.i + d); };
+
+  lb.querySelector(".lb-close").addEventListener("click", closeLb);
+  lb.querySelector(".prev").addEventListener("click", () => step(-1));
+  lb.querySelector(".next").addEventListener("click", () => step(1));
+  document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement && !lb.hidden) closeLb(); });
+  document.addEventListener("keydown", (e) => {
+    if (lb.hidden) return;
+    if (e.key === "Escape") closeLb();
+    else if (e.key === "ArrowRight") step(1);
+    else if (e.key === "ArrowLeft") step(-1);
+  });
+
+  /* Gest de lliscar (pantalles tàctils) */
+  function swipe(el, onStep) {
+    let x0 = null;
+    el.addEventListener("pointerdown", (e) => { x0 = e.clientX; });
+    el.addEventListener("pointerup", (e) => {
+      if (x0 === null) return;
+      const dx = e.clientX - x0;
+      x0 = null;
+      if (Math.abs(dx) > 45) onStep(dx < 0 ? 1 : -1);
+    });
+    el.addEventListener("pointercancel", () => { x0 = null; });
+  }
+  swipe(lbImg, step);
+
+  /* Botó de pantalla completa de cada card */
+  function goFullscreen(post) {
+    const viewer = post.querySelector(".slides");
+    if (viewer) { openLb(viewer); return; }
+    const f = post.querySelector("iframe.player");
+    if (f && f.requestFullscreen) { const r = f.requestFullscreen(); if (r && r.catch) r.catch(() => {}); return; }
+    const link = post.querySelector(".go, .watch");
+    if (link) window.open(link.href, "_blank");
+  }
+
   function bindFeed(root) {
-    root.addEventListener("error", (e) => { if (e.target.tagName === "IMG") e.target.remove(); }, true);
+    root.addEventListener("error", (e) => { if (e.target.tagName === "IMG" && !e.target.classList.contains("slide")) e.target.remove(); }, true);
+
+    /* Visors de diapositives: fletxes, teclat, gest de lliscar i doble clic per a pantalla completa */
+    root.querySelectorAll(".slides").forEach((viewer) => {
+      viewer.querySelector(".prev").addEventListener("click", () => showSlide(viewer, +viewer.dataset.i - 1));
+      viewer.querySelector(".next").addEventListener("click", () => showSlide(viewer, +viewer.dataset.i + 1));
+      viewer.addEventListener("keydown", (e) => {
+        const i = +viewer.dataset.i;
+        if (e.key === "ArrowRight") { e.preventDefault(); showSlide(viewer, i + 1); }
+        else if (e.key === "ArrowLeft") { e.preventDefault(); showSlide(viewer, i - 1); }
+      });
+      viewer.addEventListener("dblclick", () => openLb(viewer));
+      swipe(viewer, (d) => showSlide(viewer, +viewer.dataset.i + d));
+    });
 
     /* Vídeos: es carreguen/reprodueixen en entrar a pantalla i s'aturen en sortir */
     const videos = [...root.querySelectorAll("[data-video]")].filter((v) => v.querySelector("iframe, video"));
@@ -757,6 +1020,7 @@
       const btn = e.target.closest(".act");
       if (!btn) return;
       const post = btn.closest(".post");
+      if (btn.classList.contains("fs")) { goFullscreen(post); return; }
       const on = btn.getAttribute("aria-pressed") !== "true";
       if (btn.classList.contains("like")) setLike(post, on); else setSave(post, on);
     });
@@ -787,7 +1051,7 @@
   /* ---------- Resposta segons l'acció ---------- */
   async function respond(action, waUrl, opened, key) {
     const { el, body } = addBot();
-    await wait(action === "gigs" || action === "milestones" ? 900 : 700);
+    await wait(action === "gigs" || action === "milestones" || action === "mwc" ? 900 : 700);
 
     if (action === "trends") {
       body.innerHTML = "<p>Opening Bonafont Trends…</p>";
@@ -802,6 +1066,14 @@
       toBottom();
       await wait(900);
       location.href = PROMPTS[key].url;
+      return;
+    }
+
+    if (action === "mwc") {
+      el.classList.add("center");
+      body.innerHTML = "<p>Here are my MWC tours, year by year.</p>" + mwcHTML();
+      bindFeed(body);
+      el.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
       return;
     }
 
